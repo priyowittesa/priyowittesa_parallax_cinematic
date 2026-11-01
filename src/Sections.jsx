@@ -7,6 +7,7 @@ import Mark from './Mark.jsx'
 import Negative from './Negative.jsx'
 import { experience, skills, skillShots, records, person } from './data.js'
 import { usePeek } from './Peek.jsx'
+import Wordmark from './Wordmark.jsx'
 
 /* ---------- Intro ---------- */
 export function Intro() {
@@ -252,7 +253,7 @@ export function Footer() {
           <text x="0" y="372" textLength="1000" lengthAdjust="spacingAndGlyphs" fontFamily="Unbounded, sans-serif" fontWeight="800" fontSize="168">WITTESA</text>
         </svg>
         <p className="footer__legal">
-          <span>© 2026 I Komang Danda Priyowittesa</span>
+          <span className="footer__copy">© 2026 <Wordmark className="footer__logo" label="I Komang Danda Priyowittesa" /></span>
           <span>Built with React, Motion and Lenis</span>
         </p>
       </div>

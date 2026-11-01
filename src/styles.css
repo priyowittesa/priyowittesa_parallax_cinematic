@@ -485,7 +485,9 @@ a.row:hover .row__t, a.row:focus-visible .row__t { transform: translateX(14px); 
 .footer__word { grid-row: 3; }
 .footer__word svg { width: 100%; height: auto; display: block; fill: currentColor; overflow: visible; }
 .footer__word .w-phone { display: none; }
-.footer__legal { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-top: 20px; font-size: var(--step-small); color: var(--inv-muted); }
+.footer__legal { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 20px; font-size: var(--step-small); color: var(--inv-muted); }
+.footer__copy { display: inline-flex; align-items: center; gap: 0.5em; }
+.footer__word .footer__logo { display: block; width: auto; height: 22px; overflow: hidden; color: var(--inv-ink); }
 
 @media (max-width: 1024px) {
   .intro__text, .intro__stats { grid-column: 6 / 13; }
