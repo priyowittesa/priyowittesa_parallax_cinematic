@@ -1,13 +1,17 @@
 import { useCallback, useLayoutEffect, useRef, useState } from 'react'
-import { useMotionValueEvent, useScroll } from 'motion/react'
+import { useMotionValueEvent, useReducedMotion, useScroll } from 'motion/react'
 import { projects } from './data.js'
 import ProjectTip from './ProjectTip.jsx'
+import WorkIntro from './WorkIntro.jsx'
 
 const N = projects.length
 const SEGMENT = 120 // svh of scroll per project
 // Phases inside one project's segment (0..1)
 const GROW_END = 0.4
 const SHRINK_START = 0.55
+// The trailer that opens the scene (WorkIntro.jsx), in svh of scroll.
+// About 11svh per card as the reel runs past, so one wheel notch moves it less than a card.
+const INTRO = 150
 
 const clamp01 = (v) => Math.min(1, Math.max(0, v))
 const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
@@ -19,6 +23,8 @@ const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
 */
 export default function Work() {
   const track = useRef(null)
+  const stage = useRef(null)
+  const intro = useRef(null)
   const area = useRef(null)
   const frame = useRef(null)
   const imgs = useRef([])
@@ -26,12 +32,28 @@ export default function Work() {
   const dims = useRef({ W: 0, H: 0, S: 0, line: 0 })
   const [active, setActive] = useState(0)
   const activeRef = useRef(0)
+  const parked = useRef(null)
+  const sizeKeyOf = () => `${dims.current.W}:${dims.current.H}:${dims.current.S}`
 
+  const reduce = useReducedMotion()
+  const introLen = reduce ? 0 : INTRO
+  const introFrac = introLen / (N * SEGMENT + introLen)
   const { scrollYProgress } = useScroll({ target: track, offset: ['start start', 'end end'] })
 
-  const render = useCallback((p) => {
+  const render = useCallback((all) => {
     const { W, H, S, line } = dims.current
     if (!W || !frame.current) return
+
+    // First the trailer, then the projects, on one pinned stage.
+    const inIntro = all < introFrac
+    intro.current?.render(introFrac ? clamp01(all / introFrac) : 1)
+    if (stage.current && stage.current.classList.contains('is-intro') !== inIntro) {
+      stage.current.classList.toggle('is-intro', inIntro)
+    }
+    // While the trailer plays the scene behind it holds its first state: lay it out once, then leave it.
+    if (inIntro && parked.current === sizeKeyOf()) return
+    parked.current = inIntro ? sizeKeyOf() : null
+    const p = introFrac ? clamp01((all - introFrac) / (1 - introFrac)) : all
 
     let pos = clamp01(p) * N
     let i = Math.min(Math.floor(pos), N - 1)
@@ -74,7 +96,7 @@ export default function Work() {
       imgs.current.forEach((im, j) => im && (im.style.opacity = j === i ? '1' : '0'))
     }
     setActive((prev) => (prev === shown ? prev : shown))
-  }, [])
+  }, [introFrac])
 
   useMotionValueEvent(scrollYProgress, 'change', render)
 
@@ -89,6 +111,7 @@ export default function Work() {
         S: Math.min(window.innerWidth * (window.innerWidth < 760 ? 0.62 : 0.31), 450, box.height * 0.7),
         line: li ? li.getBoundingClientRect().height : 0,
       }
+      intro.current?.measure()
       render(scrollYProgress.get())
     }
     measure()
@@ -103,9 +126,23 @@ export default function Work() {
   const [tip, setTip] = useState(null)
   const openTip = (e) => {
     e.stopPropagation()
+    // Only once the visitor faces a project: the trailer before it is not clickable.
+    if (stage.current?.classList.contains('is-intro')) return
     setTip({ i: activeRef.current, x: e.clientX, y: e.clientY })
   }
   const closeTip = useCallback(() => setTip(null), [])
+
+  // Jump to a project, landing where its shot is open at full size.
+  const goTo = (i) => {
+    const el = track.current
+    if (!el) return
+    const hold = (GROW_END + SHRINK_START) / 2 // middle of the moment the shot is fully open
+    const all = introFrac + (1 - introFrac) * Math.min(1, (i + hold) / N)
+    const y = el.getBoundingClientRect().top + window.scrollY + all * (el.offsetHeight - window.innerHeight)
+    const far = Math.abs(y - window.scrollY) / window.innerHeight
+    if (window.__lenis) window.__lenis.scrollTo(y, { duration: Math.min(2.4, 0.9 + far * 0.08), easing: (t) => 1 - Math.pow(1 - t, 4) })
+    else window.scrollTo({ top: y, behavior: reduce ? 'auto' : 'smooth' })
+  }
 
   return (
     <section className="work" id="work" aria-labelledby="work-h">
@@ -123,9 +160,10 @@ export default function Work() {
         ))}
       </ul>
 
-      <div className="work__track" ref={track} style={{ height: `calc(${N * SEGMENT}svh + 100svh)` }}>
-        <div className="work__stage" aria-hidden="true">
-          <div className="work__area" ref={area}>
+      <div className="work__track" ref={track} style={{ height: `calc(${N * SEGMENT + introLen}svh + 100svh)` }}>
+        <div className={`work__stage${introLen ? ' is-intro' : ''}`} ref={stage}>
+          {introLen > 0 && <WorkIntro ref={intro} areaRef={area} stageRef={stage} />}
+          <div className="work__area" ref={area} aria-hidden="true">
             <div className="work__frame" ref={frame} onClick={openTip}>
               {projects.map((q, i) => (
                 <img
@@ -157,8 +195,22 @@ export default function Work() {
           </div>
 
           <div className="work__bar">
-            <p className="work__fact">{p.tags.join(' · ')}</p>
-            <p className="work__fact work__fact--r">
+            <p className="work__fact" aria-hidden="true">{p.tags.join(' · ')}</p>
+            {/* How far along the journey, one segment per project. Each one jumps to its project. */}
+            <nav className="work__steps" aria-label="Projects">
+              {projects.map((q, i) => (
+                <button
+                  key={q.name}
+                  type="button"
+                  className={`work__step${i < active ? ' is-done' : i === active ? ' is-now' : ''}`}
+                  data-name={q.name}
+                  aria-label={`${q.title}, project ${i + 1} of ${N}`}
+                  aria-current={i === active ? 'step' : undefined}
+                  onClick={() => goTo(i)}
+                />
+              ))}
+            </nav>
+            <p className="work__fact work__fact--r" aria-hidden="true">
               <span>Set in {p.font}</span>
               <span>{active + 1} of {N}</span>
             </p>

@@ -1,63 +1,92 @@
 import { useEffect, useRef } from 'react'
 
 /*
-  Text with a negative lens: a circle follows the pointer and shows the same text in
-  inverted colours (page colour on ink). It is a copy of the text clipped to the circle,
-  so it works in either mood and never changes the layout.
+  A negative "torch" over text: where the pointer shines, colours invert (the same difference
+  blend as the project names in Selected work). The light has no edge: it is strongest at the
+  pointer and fades out softly, follows with a little lag, swells slightly when the pointer moves
+  fast, and stays on the pointer while the page scrolls under a still mouse.
 */
-export default function Negative({ children, radius = 92 }) {
+export default function Negative({ children, radius = 90 }) {
   const box = useRef(null)
+  const light = useRef(null)
 
   useEffect(() => {
     const el = box.current
-    if (!el) return
+    const lamp = light.current
+    if (!el || !lamp) return
     const fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     if (!fine || reduce) return
 
-    let target = null
-    let pos = null
+    let pointer = null // on screen
+    let pos = null // eased position, relative to the text box
+    let level = 0 // 0 = off, 1 = fully on
+    let size = radius
+    let lastMove = null
     let raf = 0
+
     const tick = () => {
       raf = 0
-      if (!target) return
-      pos.x += (target.x - pos.x) * 0.22
-      pos.y += (target.y - pos.y) * 0.22
-      el.style.setProperty('--nx', `${pos.x}px`)
-      el.style.setProperty('--ny', `${pos.y}px`)
-      if (Math.abs(target.x - pos.x) + Math.abs(target.y - pos.y) > 0.3) raf = requestAnimationFrame(tick)
-    }
-    const onMove = (e) => {
-      const r = el.getBoundingClientRect()
-      target = { x: e.clientX - r.left, y: e.clientY - r.top }
-      if (!pos) pos = { ...target }
-      if (!raf) raf = requestAnimationFrame(tick)
-    }
-    const onEnter = (e) => {
-      const r = el.getBoundingClientRect()
-      pos = { x: e.clientX - r.left, y: e.clientY - r.top }
-      target = { ...pos }
-      el.style.setProperty('--nx', `${pos.x}px`)
-      el.style.setProperty('--ny', `${pos.y}px`)
-      el.classList.add('neg--on')
-    }
-    const onLeave = () => el.classList.remove('neg--on')
+      const area = el.getBoundingClientRect()
+      const target = pointer && { x: pointer.x - area.left, y: pointer.y - area.top }
+      const inside = target &&
+        target.x > -radius * 0.4 && target.x < area.width + radius * 0.4 &&
+        target.y > -radius * 0.4 && target.y < area.height + radius * 0.4
 
-    el.addEventListener('pointerenter', onEnter)
-    el.addEventListener('pointermove', onMove)
-    el.addEventListener('pointerleave', onLeave)
+      if (target) {
+        if (!pos || level < 0.02) pos = { ...target } // appear where the pointer is, not slide in
+        pos.x += (target.x - pos.x) * 0.2
+        pos.y += (target.y - pos.y) * 0.2
+      }
+      level += ((inside ? 1 : 0) - level) * (inside ? 0.16 : 0.1)
+      size += (radius - size) * 0.08
+
+      if (pos) {
+        lamp.style.setProperty('--lx', `${pos.x + radius * 1.5}px`)
+        lamp.style.setProperty('--ly', `${pos.y + radius * 1.5}px`)
+        lamp.style.setProperty('--lr', `${size}px`)
+      }
+      lamp.style.opacity = level.toFixed(3)
+
+      const settling = target && (Math.abs(target.x - pos.x) + Math.abs(target.y - pos.y) > 0.3)
+      if (settling || Math.abs((inside ? 1 : 0) - level) > 0.005 || Math.abs(radius - size) > 0.3) {
+        raf = requestAnimationFrame(tick)
+      }
+    }
+    // Off screen the text cannot be lit, so scrolling elsewhere on the page costs nothing here.
+    let near = false
+    const io = new IntersectionObserver(([e]) => { near = e.isIntersecting; schedule() }, { rootMargin: `${radius * 2}px` })
+    io.observe(el)
+    const schedule = () => { if (!raf && (near || level > 0.005)) raf = requestAnimationFrame(tick) }
+
+    const onMove = (e) => {
+      pointer = { x: e.clientX, y: e.clientY }
+      if (lastMove) {
+        // a quick flick widens the light a little, like a torch swung through the air
+        const speed = Math.hypot(e.clientX - lastMove.x, e.clientY - lastMove.y)
+        size = Math.min(radius * 1.35, size + speed * 0.6)
+      }
+      lastMove = pointer
+      schedule()
+    }
+    const onOut = (e) => { if (!e.relatedTarget) { pointer = null; lastMove = null; schedule() } }
+
+    window.addEventListener('pointermove', onMove, { passive: true })
+    window.addEventListener('scroll', schedule, { passive: true }) // the text moves, the pointer does not
+    document.addEventListener('pointerout', onOut)
     return () => {
-      el.removeEventListener('pointerenter', onEnter)
-      el.removeEventListener('pointermove', onMove)
-      el.removeEventListener('pointerleave', onLeave)
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('scroll', schedule)
+      document.removeEventListener('pointerout', onOut)
+      io.disconnect()
       cancelAnimationFrame(raf)
     }
-  }, [])
+  }, [radius])
 
   return (
-    <div className="neg" ref={box} style={{ '--nr': `${radius}px` }}>
+    <div className="neg" ref={box} style={{ '--neg-r': `${radius}px` }}>
       {children}
-      <div className="neg__copy" aria-hidden="true">{children}</div>
+      <div className="neg__light" ref={light} aria-hidden="true" />
     </div>
   )
 }

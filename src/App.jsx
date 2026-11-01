@@ -11,6 +11,7 @@ function useSmoothScroll(enabled) {
     if (!enabled) return
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const lenis = new Lenis({ lerp: 0.1, anchors: true })
+    window.__lenis = lenis // lets the work pagination glide with the same smooth scroll
     let id
     const raf = (t) => {
       lenis.raf(t)
@@ -20,6 +21,7 @@ function useSmoothScroll(enabled) {
     return () => {
       cancelAnimationFrame(id)
       lenis.destroy()
+      if (window.__lenis === lenis) delete window.__lenis
     }
   }, [enabled])
 }

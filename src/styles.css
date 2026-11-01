@@ -188,16 +188,17 @@ main { position: relative; z-index: 2; background: var(--bg); transition: backgr
 
 /* ---------- Intro ---------- */
 .intro__head { grid-column: 1 / 13; }
-/* Negative lens: an inverted copy of the text, clipped to a circle at the pointer */
-@property --nk { syntax: '<number>'; inherits: true; initial-value: 0; }
-.neg { position: relative; --nk: 0; transition: --nk 380ms cubic-bezier(0.22, 1, 0.36, 1); }
-.neg.neg--on { --nk: 1; transition-duration: 260ms; }
-.neg__copy {
-  position: absolute; inset: 0; pointer-events: none; user-select: none;
-  color: var(--bg); background: var(--ink);
-  /* The copy reaches a radius beyond the text box, so the circle is never cut off at the edges. */
-  inset: calc(var(--nr) * -1); padding: var(--nr);
-  clip-path: circle(calc(var(--nr) * var(--nk)) at calc(var(--nx, 0px) + var(--nr)) calc(var(--ny, 0px) + var(--nr)));
+/* Negative torch: a white light with a difference blend inverts whatever lies under it,
+   page and text alike. It fades from the centre with no edge, so it reads as light, not a disc. */
+.neg { position: relative; }
+.neg__light {
+  position: absolute; inset: calc(var(--neg-r) * -1.5); pointer-events: none; opacity: 0;
+  mix-blend-mode: difference;
+  background: radial-gradient(circle var(--lr, 120px) at var(--lx, 50%) var(--ly, 50%),
+    /* full negative in the core, then a short soft falloff: halfway values turn page and text the same
+       grey, so the fade is kept narrow to keep the words readable at the edge of the light */
+    #fff 0%, #fff 58%, rgba(255, 255, 255, 0.82) 68%, rgba(255, 255, 255, 0.45) 78%,
+    rgba(255, 255, 255, 0.14) 88%, rgba(255, 255, 255, 0) 100%);
 }
 
 /* The pinned drawing's extra height goes to an empty last row, so text and stats stay together. */
@@ -515,3 +516,68 @@ html.is-loading { overflow: hidden; }
   transition: fill 260ms var(--ease-out, ease);
 }
 .loader__dot--hot { fill: var(--accent); }
+
+/* ---------- Work trailer: the whole reel, on the work scene's own stage ---------- */
+.reel { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+.reel__deck { position: absolute; perspective: 1400px; transform-style: preserve-3d; }
+.reel__card {
+  position: absolute; left: 50%; top: 50%; overflow: hidden; background: var(--bg);
+  opacity: 0; visibility: hidden; will-change: transform, opacity; backface-visibility: hidden;
+}
+/* Only the first card is cropped (into the scene's square). */
+.reel__card--lead { will-change: transform, opacity, clip-path; }
+/* The reel's pictures are already grey (public/img/reel), so no filter runs while they move. */
+.reel__card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.reel__card img[data-full] { filter: grayscale(1); }
+.reel__words { position: absolute; inset: 0 0 auto; z-index: 200; display: grid; }
+.reel__line {
+  grid-area: 1 / 1; overflow: hidden; text-align: center;
+  font-size: var(--step-head); line-height: 1; padding-bottom: 0.08em;
+}
+.reel__line > span { display: inline-block; transform: translateY(110%); will-change: transform; }
+.reel__bar { position: absolute; left: var(--m); right: var(--m); bottom: 28px; }
+.reel__bar .work__fact--r { font-variant-numeric: tabular-nums; }
+/* Trailer and scene share the stage: only one of them shows at a time. */
+.work__stage:not(.is-intro) .reel { visibility: hidden; }
+.work__stage.is-intro .work__frame { visibility: hidden; }
+.work__name, .work__stage > .work__bar { transition: opacity 500ms var(--ease-out, ease); }
+.work__stage.is-intro .work__name, .work__stage.is-intro > .work__bar { opacity: 0; pointer-events: none; transition-duration: 150ms; }
+/* The masks turn pointer events back on for hover; switch them off again during the trailer. */
+.work__stage.is-intro .work__mask, .work__stage.is-intro .work__frame { pointer-events: none; cursor: default; }
+
+/* Journey segments in the work scene's bar, also its pagination.
+   Each button is taller than the bar it draws, so it is easy to hit. */
+.work__steps { display: flex; gap: 4px; align-self: center; }
+.work__step {
+  position: relative; width: 18px; height: 28px; padding: 0; border: 0; background: none; cursor: pointer;
+  transition: width 400ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.work__step::before {
+  content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 6px; margin-top: -3px;
+  background: var(--ink); opacity: 0.16;
+  transition: opacity 250ms var(--ease-out, ease), background-color 250ms var(--ease-out, ease), height 250ms var(--ease-out, ease), margin 250ms var(--ease-out, ease);
+}
+.work__step.is-done::before { opacity: 0.55; }
+.work__step.is-now { width: 34px; }
+.work__step.is-now::before { opacity: 1; background: var(--accent); }
+/* The project's name rises above the segment under the pointer. */
+.work__step::after {
+  content: attr(data-name); position: absolute; left: 50%; bottom: calc(100% + 6px);
+  padding: 6px 10px; white-space: nowrap; font-size: 0.8125rem; font-weight: 500; line-height: 1.2;
+  background: var(--inv-bg); color: var(--inv-ink);
+  opacity: 0; transform: translate(-50%, 6px); pointer-events: none;
+  transition: opacity 160ms var(--ease-out, ease), transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+@media (hover: hover) {
+  .work__step:hover::before { opacity: 1; height: 10px; margin-top: -5px; }
+  .work__step:hover::after { opacity: 1; transform: translate(-50%, 0); }
+}
+.work__step:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.work__step:focus-visible::after { opacity: 1; transform: translate(-50%, 0); }
+.work__step:active::before { transform: scaleY(0.7); }
+@media (max-width: 760px) {
+  .work__step { width: 14px; height: 32px; }
+  .work__step.is-now { width: 24px; }
+  .work__steps { gap: 3px; }
+}
+

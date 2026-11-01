@@ -7,7 +7,7 @@ export const person = {
   phone: '+62 822 6739 6716',
   phoneHref: 'tel:+6282267396716',
   city: 'Jakarta Timur, Indonesia',
-  resume: 'https://drive.google.com/file/d/13D-Bmf1yTK84UoEhPXItwYUz4LXWwmbC/view?usp=drive_link',
+  resume: 'https://drive.google.com/file/d/1AvS7Kx49AsP9lnOURcqLqJ6MDwGoF65c/view?usp=sharing',
   social: [
     { label: 'LinkedIn', href: 'https://www.linkedin.com/in/xikdp/' },
     { label: 'Dribbble', href: 'https://dribbble.com/xikdp' },
@@ -24,6 +24,10 @@ const proto = (href) => ({ label: 'Prototype', href })
 const study = (href) => ({ label: 'Case study', href })
 
 export const projects = [
+  { name: 'Folio 2.0', title: 'Portfolio Website V2.0', tags: [UI, 'tech', 'Prototype'], font: 'Recoleta',
+    desc: 'My second UI/UX portfolio, built in Framer: planetary visuals on a clean white canvas, showcasing selected work, skills and experience.',
+    links: [proto('https://priyowittesa.framer.wiki/')],
+    img: '/img/portfolio-v20.jpeg', w: 1501, h: 936, alt: 'Portfolio website version 1.0 in aurora gradient' },
   { name: 'Celestify', title: 'Seamless Learning Experience: E-Learning Platform UI', tags: [UI, 'Tech'], font: 'Poppins',
     desc: 'Complete e-learning flow from landing to success with a clean and consistent UX, including 6 screens, an editable Figma file, and reusable components ready for real product use.',
     links: [{ label: 'Gumroad', href: 'https://inseneca.gumroad.com/l/celestifyelearning' }],

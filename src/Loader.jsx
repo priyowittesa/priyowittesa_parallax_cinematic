@@ -6,8 +6,8 @@ import { projects } from './data.js'
   Opening screen, built from the P mark.
   1. An empty screen, then the mark draws itself: the bowl is traced, the three dots land.
   2. While the page loads, the three dots of the stem pulse in turn, like a typing indicator.
-  3. When it is ready, the last dot turns orange, becomes a window onto the page, and the camera
-     flies into it until the window fills the screen.
+  3. When it is ready, the last dot turns orange and becomes a window onto the page. Only that
+     window grows, until it fills the screen and swallows the rest of the mark.
 */
 
 // Whether the page behind the loader may play its entrance.
@@ -93,7 +93,7 @@ export default function Loader({ onReveal, onDone }) {
       await wait(120)
       if (!alive) return
 
-      // ...and becomes a window. The camera flies into it until it fills the screen.
+      // ...and becomes a window onto the page, which grows until it fills the screen.
       const box = logo.current.getBoundingClientRect()
       const unit = box.width / VIEW
       const cx = box.left + DOT_X * unit
@@ -115,8 +115,8 @@ export default function Loader({ onReveal, onDone }) {
         duration: 1.6,
         ease: [0.76, 0, 0.24, 1],
         onUpdate: (t) => {
-          const z = Math.exp(t * lnS) // zoom in log space, so the speed feels even
-          logo.current.style.transform = `scale(${z})`
+          // Only the dot grows; the rest of the mark stays put and the opening swallows it.
+          const z = Math.exp(t * lnS) // grow in log space, so the speed feels even
           hole(r0 * z)
           if (!revealed && t > 0.18) { revealed = true; onReveal() }
         },
