@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx vite *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173/)",
+      "Bash(rm -rf __TRACKED_VAR__/about-profile)",
+      "Bash(node __TRACKED_VAR__/shot2.mjs __TRACKED_VAR__/about)",
+      "Bash(node -e ' *)",
+      "Bash(cp /tmp/work.css __TRACKED_VAR__/work.css)",
+      "Bash(grep -n \"export const\\\\|CASE\\\\|^const\\\\|^//\" src/data.js)",
+      "Bash(python -c ' *)",
+      "Bash(node scratchpad/png.mjs images/15.png 12)",
+      "Bash(sed -i \"s/setTimeout\\(r, 2500\\)/setTimeout\\(r, 6000\\)/\" mark.mjs)",
+      "Bash(node mark.mjs mk)",
+      "Bash(node mark.mjs \"C:/Users/VICTUS/AppData/Local/Temp/claude/d--NEW-PORTFOLIO-2026-VIBE-CODING/34271a39-f974-41fe-af80-029e79dc4adb/scratchpad/mk\")",
+      "Bash(sed -e \"s/document.querySelector\\('.mark'\\).getBoundingClientRect\\(\\).top + scrollY - innerHeight + \\(\\\\${off}\\)/document.querySelector\\('#intro-h'\\).getBoundingClientRect\\(\\).top + scrollY - 120 + \\(\\\\${off}\\)/\" -e \"s/\\\\[150, 450, 750, 1050\\\\]/[0, 250, 500, 800]/\" mark.mjs)",
+      "Bash(node mark2.mjs __TRACKED_VAR__/m2)",
+      "Bash(sed -i \"s/JSON.stringify\\(document.querySelector\\('.neg'\\).getBoundingClientRect\\(\\)\\)/JSON.stringify\\({...document.querySelector\\('.neg'\\).getBoundingClientRect\\(\\).toJSON\\(\\), sy: scrollY}\\)/; s/clip: { x: r.left - 20, y: r.top - 20,/clip: { x: r.left - 20, y: r.top + r.sy - 20,/\" neg.mjs)",
+      "Bash(node neg.mjs __TRACKED_VAR__/ng)",
+      "Bash(sed -i \"s/format: 'jpeg', quality: 75/format: 'png'/; s/width: r.width + 40, height: r.height + 40, scale: 1/width: 420, height: 260, scale: 1.5/; s/\\\\.jpg/.png/; s/for \\(const mood of \\\\['dark', 'light'\\\\]\\)/for \\(const mood of ['dark']\\)/; s/9355/9357/g\" neg.mjs)",
+      "Bash(node neg.mjs __TRACKED_VAR__/nz)",
+      "Bash(curl -s -A \"Mozilla/5.0\" \"https://unsplash.com/napi/search/photos?query=wireframe%20sketch&per_page=3\")",
+      "Bash(node \"C:/Users/VICTUS/.claude/skills/synced/7aa35a2c-d62b-4168-8cac-635d1a22feed_060e2f3e-d210-4131-bb46-e097a8b2ec1a/design-taste-frontend/scripts/assets.mjs\" \"wireframe sketch\")",
+      "Bash(curl -s -A \"Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36 \\(KHTML, like Gecko\\) Chrome/130 Safari/537.36\" \"https://unsplash.com/s/photos/wireframe?license=free\")",
+      "Bash(grep -oE 'alt=\"[^\"]{5,120}\"')",
+      "Bash(curl -s -o /tmp/u.html -w \"%{http_code} %{size_download}\\\\n\" -A \"Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36 \\(KHTML, like Gecko\\) Chrome/130 Safari/537.36\" -H \"Accept: text/html\" -H \"Accept-Language: en-US\" \"https://unsplash.com/s/photos/wireframe\")",
+      "Read(//tmp/**)",
+      "Bash(sed -i \"s#'file:///' + process.cwd\\(\\).replace\\(/\\\\\\\\\\\\\\\\/g, '/'\\) + '/sheet.html'#'file:///C:/Users/VICTUS/AppData/Local/Temp/claude/d--NEW-PORTFOLIO-2026-VIBE-CODING/34271a39-f974-41fe-af80-029e79dc4adb/scratchpad/sheet.html'#; s#'/sheet-profile'#'/sheet-profile'#\" sheetshot.mjs)",
+      "Bash(node sheetshot.mjs)",
+      "PowerShell(Get-NetTCPConnection -State Listen -LocalPort 5173,5174,5175,4173 -ErrorAction SilentlyContinue | ForEach-Object { $p = Get-CimInstance Win32_Process -Filter \"ProcessId=$\\($_.OwningProcess\\)\"; [pscustomobject]@{ Port = $_.LocalPort; PID = $_.OwningProcess; Name = $p.Name; Command = $p.CommandLine } } | Format-List)"
+    ]
+  }
+}

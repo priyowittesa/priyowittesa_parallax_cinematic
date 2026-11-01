@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en" data-mood="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Priyowittesa — UI/UX Designer</title>
+    <meta name="description" content="I Komang Danda Priyowittesa, UI/UX designer in Jakarta designing enterprise software, design systems and mobile products." />
+    <meta name="theme-color" content="#18191b" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@800&family=Onest:wght@400;500&display=swap" rel="stylesheet" />
+    <link rel="preload" as="image" href="/img/portrait.jpg" />
+    <script>
+      try {
+        var m = new URLSearchParams(location.search).get('mood') || localStorage.getItem('mood')
+        if (m === 'light' || m === 'dark') document.documentElement.dataset.mood = m
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
