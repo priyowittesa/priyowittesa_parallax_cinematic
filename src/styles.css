@@ -237,59 +237,113 @@ main { position: relative; z-index: 2; background: var(--bg); transition: backgr
 .stat__n { font-family: var(--display); font-weight: 800; font-size: var(--step-head); white-space: nowrap; letter-spacing: -0.04em; line-height: 1; }
 .stat__l { margin-top: 12px; font-size: var(--step-small); color: var(--muted); max-width: 16em; }
 
-/* ---------- Work: one pinned scene, each shot grows to full size and back ---------- */
+/* ---------- Work: a darkroom drying line. Disposable prints pegged to a rope that runs in a Z ---------- */
 .work { padding-top: var(--gap); background: var(--surface); transition: background-color 400ms var(--ease-in-out); }
-.work__title { color: var(--muted); font-size: var(--step-poster); text-align: center; padding: 0 var(--m); }
-.work__track { position: relative; }
-.work__stage {
-  position: sticky; top: 0; height: 100svh;
-  display: grid; grid-template-rows: 1fr auto; padding: 56px var(--m) 28px;
-}
-.work__area { position: relative; min-height: 0; }
-.work__frame {
-  position: absolute; left: 50%; top: 50%;
-  display: block; overflow: hidden; background: var(--bg);
-  transform-origin: 50% 50%; will-change: transform, clip-path;
-}
-.work__frame img {
-  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
-  filter: grayscale(1); transition: opacity 180ms ease;
-}
-.work__bar { display: flex; justify-content: space-between; align-items: end; gap: 24px; padding-top: 20px; }
-.work__fact { font-size: var(--step-small); line-height: 1.45; }
-.work__fact--r { text-align: right; color: var(--muted); }
-.work__fact span { display: block; }
+.work__head { padding: 0 var(--m); text-align: center; }
+.work__title { color: var(--muted); font-size: var(--step-poster); }
+.work__lead { max-width: 30em; margin: 20px auto 0; color: var(--muted); font-size: var(--step-body); text-wrap: balance; }
 
-/* Name on top of the shot, centred on it */
-/* No transform or z-index here: the negative layer must blend with the shot behind, not inside its own group. */
-.work__name {
-  position: absolute; inset: 0;
-  display: grid; place-items: center;
-  text-decoration: none; color: var(--ink);
+.line {
+  --rope-h: 56px;                       /* height of the box the sagging rope is drawn in */
+  --row-gap: clamp(64px, 7vw, 104px);
+  --paper-print: #f2f0eb;
+  padding: clamp(56px, 6vw, 96px) var(--m) var(--gap);
+}
+.line__row {
+  position: relative; list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); column-gap: clamp(20px, 3vw, 48px);
+  align-items: start;
+}
+.line__row + .line__row { margin-top: var(--row-gap); }
+.line__rope, .line__turn {
+  position: absolute; left: 0; width: 100%; overflow: visible; pointer-events: none; z-index: 0;
+  fill: none; stroke: var(--muted); stroke-width: 1.5px; stroke-linecap: round;
+}
+.line__rope { top: 0; height: var(--rope-h); }
+/* The diagonal starts where this row's rope ends (right) and lands where the next one starts (left). */
+.line__turn { top: calc(var(--rope-h) * 0.1); height: calc(100% + var(--row-gap)); stroke-dasharray: 2 7; opacity: 0.7; }
+
+.slot {
+  position: relative; z-index: 1;
+  padding-top: calc(var(--hang) * var(--rope-h) + 10px);
+  transform-origin: 50% calc(var(--hang) * var(--rope-h)); /* it swings from its peg */
+}
+.slot:nth-child(even) { z-index: 2; }
+
+/* A wooden clothes peg, clipped onto the rope. */
+.peg {
+  position: absolute; z-index: 3; left: 50%; width: 12px; height: 44px; margin-left: -6px;
+  top: calc(var(--hang) * var(--rope-h) - 18px);
+  border-radius: 2px 2px 3px 3px;
+  background: linear-gradient(90deg, #a87d4f, #d8b98d 40%, #c49a6a 60%, #9b7046);
+  box-shadow: 0 3px 4px rgba(0, 0, 0, 0.35);
   pointer-events: none;
 }
-.work__mask {
-  grid-area: 1 / 1; display: block; overflow: hidden; height: calc(var(--step-poster) * 0.92);
-  pointer-events: auto; cursor: pointer;
-  clip-path: inset(0 0 0 0);
-  transition: clip-path 420ms cubic-bezier(0.65, 0, 0.35, 1);
+.peg::after { content: ''; position: absolute; left: -2px; right: -2px; top: 16px; height: 5px; border-radius: 1px; background: #8c9096; }
+
+/* The print: a disposable-camera photo with a white border and a deeper strip at the foot. */
+.print {
+  position: relative; display: block; width: 100%; margin: 0; border: 0; cursor: pointer; text-align: left;
+  padding: 5% 5% 0; background: var(--paper-print); color: #1b1c1e;
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.22), 0 22px 36px -22px rgba(0, 0, 0, 0.7);
+  transition: transform 320ms var(--ease-out);
 }
-.work__mask ul { will-change: transform; }
-.work__mask li { font-size: var(--step-poster); line-height: 0.92; height: calc(var(--step-poster) * 0.92); text-align: center; white-space: nowrap; padding: 0 0.04em; }
-/* Negative layer: white with a difference blend inverts whatever is behind it (the shot and the ground). */
-/* At rest the name is a see-through grey. The difference blend darkens it over light parts of the shot
-   and lightens it over dark parts, so it stays readable on any image. */
-.work__mask:not(.work__mask--hot) { color: #c8cacd; opacity: 0.6; mix-blend-mode: difference; }
-/* On hover it fills with the negative: solid white with the same difference blend. */
-.work__mask--hot { color: #fff; mix-blend-mode: difference; clip-path: inset(100% 0 0 0); }
+/* A deeper shadow for the lifted print, faded in rather than repainted. */
+.print::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0;
+  box-shadow: 0 34px 50px -24px rgba(0, 0, 0, 0.75);
+  transition: opacity 320ms var(--ease-out);
+}
+.print__photo { position: relative; display: block; aspect-ratio: 4 / 3; overflow: hidden; background: #2a2c30; }
+.print__photo img {
+  width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%;
+  filter: grayscale(1) contrast(1.04); transition: filter 450ms var(--ease-out);
+}
+/* The orange date stamp a disposable camera burns into the corner; here it counts the roll. */
+.print__stamp {
+  position: absolute; right: 6%; bottom: 6%;
+  font-size: 0.75rem; font-weight: 600; letter-spacing: 0.12em; font-variant-numeric: tabular-nums;
+  color: #ff9a3c; text-shadow: 0 0 1px rgba(40, 20, 10, 0.7), 0 0 2px rgba(40, 20, 10, 0.4), 0 0 7px rgba(255, 110, 30, 0.7);
+}
+.print__foot {
+  display: flex; justify-content: space-between; gap: 12px;
+  padding: 14px 2px 18px; font-size: 0.75rem; line-height: 1.2; letter-spacing: 0.04em; text-transform: uppercase; color: #5b5e64;
+}
+.print__foot span:last-child { text-align: right; }
+/* The label: a sticker slapped across the photo's edge, alternating corners down the line. */
+.print__label {
+  position: absolute; left: -8px; bottom: calc(18px + 1.2em + 14px - 0.6em); z-index: 2;
+  max-width: calc(100% + 8px); padding: 7px 10px 6px;
+  background: var(--accent); color: var(--graphite);
+  font-size: clamp(0.8125rem, 0.55rem + 0.6vw, 1.125rem); font-weight: 800; line-height: 1; text-transform: uppercase;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  transform: rotate(-3deg); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+.print--b .print__label { left: auto; right: -8px; bottom: auto; top: 3.5%; transform: rotate(2.5deg); }
 
-/* Hovering the shot or its name: the shot gets its colours back and the name fills with orange from the bottom. */
-.work__frame img { transition: opacity 180ms ease, filter 450ms var(--ease-out); }
-.work__area:has(.work__frame:hover, .work__mask:hover) .work__frame img { filter: none; }
-.work__area:has(.work__frame:hover, .work__mask:hover) .work__mask--hot { clip-path: inset(0 0 0 0); }
-.work__area:has(.work__frame:hover, .work__mask:hover) .work__mask:not(.work__mask--hot) { clip-path: inset(0 0 100% 0); }
+@media (hover: hover) and (pointer: fine) {
+  /* Lifted off the line and straightened, and the photo gets its colour back. */
+  .print:hover { transform: translateY(-8px) rotate(calc(var(--rot) * -1)); }
+  .print:hover::after { opacity: 1; }
+  .print:hover .print__photo img { filter: none; }
+}
+.print:active { transform: translateY(-4px) rotate(calc(var(--rot) * -1)) scale(0.98); transition-duration: 120ms; }
+.print:focus-visible { outline: 3px solid var(--accent); outline-offset: 6px; }
+.print:focus-visible .print__photo img { filter: none; }
 
-.work__frame, .work__mask { cursor: pointer; }
+@media (max-width: 640px) {
+  .line { --rope-h: 40px; --row-gap: 56px; }
+  .line__row { column-gap: 16px; }
+  .peg { width: 9px; height: 32px; margin-left: -4.5px; top: calc(var(--hang) * var(--rope-h) - 13px); }
+  .peg::after { top: 12px; height: 4px; }
+  .print__foot { padding: 10px 1px 12px; font-size: 0.625rem; }
+  .print__foot span:last-child { display: none; }
+  .print__stamp { font-size: 0.5625rem; }
+  .print__label { padding: 5px 7px 4px; bottom: calc(12px + 1.2em + 10px - 0.6em); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .print, .print::after, .print__photo img { transition-duration: 0ms; }
+}
 
 /* ---------- Project tooltip (floats, so it may carry a shadow) ---------- */
 /* Skill preview: a picture that follows the pointer over a skill */
@@ -465,11 +519,6 @@ a.row:hover .row__t, a.row:focus-visible .row__t { transform: translateX(14px); 
   .intro__stats { grid-row: 5; margin-top: 48px; }
   .intro__stats > div { grid-template-columns: 1fr; gap: 8px; }
 
-  .work__bar { flex-direction: column; align-items: center; gap: 6px; }
-  .work__name { --step-poster: 8.4vw; }  .work__fact, .work__fact--r { text-align: center; justify-self: center; padding: 0; }
-  .work__fact--r span { display: inline; }
-  .work__fact--r span + span::before { content: " · "; }
-
   .exp__btn { flex-direction: column; gap: 6px; align-items: flex-start; padding-bottom: 14px; }
   .exp__body { display: block; padding: 8px 0 40px; }
   .exp__points { grid-template-columns: 1fr; margin-top: 20px; }
@@ -517,67 +566,4 @@ html.is-loading { overflow: hidden; }
 }
 .loader__dot--hot { fill: var(--accent); }
 
-/* ---------- Work trailer: the whole reel, on the work scene's own stage ---------- */
-.reel { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
-.reel__deck { position: absolute; perspective: 1400px; transform-style: preserve-3d; }
-.reel__card {
-  position: absolute; left: 50%; top: 50%; overflow: hidden; background: var(--bg);
-  opacity: 0; visibility: hidden; will-change: transform, opacity; backface-visibility: hidden;
-}
-/* Only the first card is cropped (into the scene's square). */
-.reel__card--lead { will-change: transform, opacity, clip-path; }
-/* The reel's pictures are already grey (public/img/reel), so no filter runs while they move. */
-.reel__card img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.reel__card img[data-full] { filter: grayscale(1); }
-.reel__words { position: absolute; inset: 0 0 auto; z-index: 200; display: grid; }
-.reel__line {
-  grid-area: 1 / 1; overflow: hidden; text-align: center;
-  font-size: var(--step-head); line-height: 1; padding-bottom: 0.08em;
-}
-.reel__line > span { display: inline-block; transform: translateY(110%); will-change: transform; }
-.reel__bar { position: absolute; left: var(--m); right: var(--m); bottom: 28px; }
-.reel__bar .work__fact--r { font-variant-numeric: tabular-nums; }
-/* Trailer and scene share the stage: only one of them shows at a time. */
-.work__stage:not(.is-intro) .reel { visibility: hidden; }
-.work__stage.is-intro .work__frame { visibility: hidden; }
-.work__name, .work__stage > .work__bar { transition: opacity 500ms var(--ease-out, ease); }
-.work__stage.is-intro .work__name, .work__stage.is-intro > .work__bar { opacity: 0; pointer-events: none; transition-duration: 150ms; }
-/* The masks turn pointer events back on for hover; switch them off again during the trailer. */
-.work__stage.is-intro .work__mask, .work__stage.is-intro .work__frame { pointer-events: none; cursor: default; }
-
-/* Journey segments in the work scene's bar, also its pagination.
-   Each button is taller than the bar it draws, so it is easy to hit. */
-.work__steps { display: flex; gap: 4px; align-self: center; }
-.work__step {
-  position: relative; width: 18px; height: 28px; padding: 0; border: 0; background: none; cursor: pointer;
-  transition: width 400ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-.work__step::before {
-  content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 6px; margin-top: -3px;
-  background: var(--ink); opacity: 0.16;
-  transition: opacity 250ms var(--ease-out, ease), background-color 250ms var(--ease-out, ease), height 250ms var(--ease-out, ease), margin 250ms var(--ease-out, ease);
-}
-.work__step.is-done::before { opacity: 0.55; }
-.work__step.is-now { width: 34px; }
-.work__step.is-now::before { opacity: 1; background: var(--accent); }
-/* The project's name rises above the segment under the pointer. */
-.work__step::after {
-  content: attr(data-name); position: absolute; left: 50%; bottom: calc(100% + 6px);
-  padding: 6px 10px; white-space: nowrap; font-size: 0.8125rem; font-weight: 500; line-height: 1.2;
-  background: var(--inv-bg); color: var(--inv-ink);
-  opacity: 0; transform: translate(-50%, 6px); pointer-events: none;
-  transition: opacity 160ms var(--ease-out, ease), transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-@media (hover: hover) {
-  .work__step:hover::before { opacity: 1; height: 10px; margin-top: -5px; }
-  .work__step:hover::after { opacity: 1; transform: translate(-50%, 0); }
-}
-.work__step:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.work__step:focus-visible::after { opacity: 1; transform: translate(-50%, 0); }
-.work__step:active::before { transform: scaleY(0.7); }
-@media (max-width: 760px) {
-  .work__step { width: 14px; height: 32px; }
-  .work__step.is-now { width: 24px; }
-  .work__steps { gap: 3px; }
-}
 
