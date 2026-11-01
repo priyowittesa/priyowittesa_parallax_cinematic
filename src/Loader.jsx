@@ -1,186 +1,149 @@
 import { createContext, useContext, useEffect, useRef } from 'react'
-import { createCloth, paintSheet } from './cloth.js'
+import { animate } from 'motion/react'
 import { projects } from './data.js'
 
 /*
-  Opening screen.
-  1. A full-screen sheet counts real loading (fonts, the portrait, the first shots) to 100.
-  2. Meanwhile "hello" decodes from one language into the next, and lands on "Halo".
-  3. At 100 the sheet becomes real cloth (see cloth.js): a breeze ripples it, the pins let go
-     from the centre out, and it falls and folds away with the greeting still printed on it.
+  Opening screen, built from the P mark.
+  1. An empty screen, then the mark draws itself: the bowl is traced, the three dots land.
+  2. While the page loads, the three dots of the stem pulse in turn, like a typing indicator.
+  3. When it is ready, the last dot turns orange, becomes a window onto the page, and the camera
+     flies into it until the window fills the screen.
 */
 
 // Whether the page behind the loader may play its entrance.
 export const IntroReady = createContext(true)
 export const useIntroReady = () => useContext(IntroReady)
 
-const GREETINGS = [
-  ['Hello', 'English'],
-  ['Hola', 'Español'],
-  ['Bonjour', 'Français'],
-  ['Ciao', 'Italiano'],
-  ['Привет', 'Русский'],
-  ['Olá', 'Português'],
-  ['Merhaba', 'Türkçe'],
-  ['Hallo', 'Deutsch'],
-  ['Om Swastyastu', 'Basa Bali'],
-]
-const HOME = ['Halo', 'Bahasa Indonesia']
+// The mark on its 1024 grid (same geometry as Mark.jsx).
+const DOTS = [225, 515, 800]
+const DOT_X = 320
+const DOT_R = 80
+const BOWL = 'M456 225H558A145 145 0 0 1 558 515H456'
+const VIEW = 1024
 
-const MIN_TIME = 3200 // long enough to read a handful of greetings
-const MAX_TIME = 9000 // never hold the visitor longer than this
-const SCRAMBLE = 300
-const HOLD = 260
-const POOL = 'ABCDEFGHIJKLMNOPQRSTUVWXYZАБВГДЕЖЗИКЛМНОПРСТУФ'
+const MIN_TIME = 2400 // the mark is always seen whole, even on a warm cache
+const MAX_TIME = 8000 // never hold the visitor longer than this
 
-const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
-
-function loadImage(src) {
-  return new Promise((res) => {
-    const im = new Image()
-    im.onload = im.onerror = () => res()
-    im.src = src
-  })
-}
-
-/* Writes a word into `el`, each letter settling from random characters, left to right. */
-function scrambleTo(el, word, duration) {
-  return new Promise((resolve) => {
-    const from = el.textContent || ''
-    const len = Math.max(word.length, from.length)
-    const start = performance.now()
-    const step = (now) => {
-      const t = Math.min(1, (now - start) / duration)
-      let out = ''
-      for (let i = 0; i < len; i++) {
-        const settle = (i + 1) / (len + 1) // later letters settle later
-        if (t >= settle * 0.85 + 0.15) out += word[i] ?? ''
-        else if (word[i] === ' ' || (i >= word.length && t > 0.5)) out += word[i] ?? ''
-        else out += POOL[(Math.random() * POOL.length) | 0]
-      }
-      el.textContent = out
-      if (t < 1) requestAnimationFrame(step)
-      else { el.textContent = word; resolve() }
-    }
-    requestAnimationFrame(step)
-  })
-}
+const wait = (ms) => new Promise((r) => setTimeout(r, ms))
+const loadImage = (src) =>
+  new Promise((res) => { const im = new Image(); im.onload = im.onerror = () => res(); im.src = src })
 
 export default function Loader({ onReveal, onDone }) {
   const root = useRef(null)
-  const content = useRef(null)
-  const gl = useRef(null)
-  const pct = useRef(null)
-  const bar = useRef(null)
-  const word = useRef(null)
-  const lang = useRef(null)
+  const logo = useRef(null)
+  const bowl = useRef(null)
+  const dots = useRef([])
   const status = useRef(null)
 
   useEffect(() => {
-    const reduce = reduceMotion()
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     let alive = true
-    let done = 0
-    let stopDrop = null
-    const fabric = new Image()
-    fabric.src = '/img/fabric.jpg'
-    const jobs = [
-      document.fonts?.ready ?? Promise.resolve(),
-      loadImage('/img/fabric.jpg'),
-      loadImage('/img/portrait.jpg'),
-      loadImage(projects[0].img),
-      loadImage(projects[1].img),
-    ]
-    jobs.forEach((j) => j.then(() => { done += 1 }))
+    const running = []
+    const run = (...args) => { const a = animate(...args); running.push(a); return a }
 
-    // Greetings cycle until loading completes, then settle on "Halo".
-    let finished = false
-    const cycle = async () => {
-      if (reduce) { word.current.textContent = HOME[0]; lang.current.textContent = HOME[1]; return }
-      let i = 0
-      while (alive && !finished) {
-        const [w, l] = GREETINGS[i % GREETINGS.length]
-        lang.current.textContent = l
-        await scrambleTo(word.current, w, SCRAMBLE)
-        await new Promise((r) => setTimeout(r, HOLD))
-        i += 1
-      }
-    }
-    cycle()
-
-    // Counter: follows real loading, but never faster than MIN_TIME so the greetings can be read.
     const start = performance.now()
-    let shown = 0
-    let raf = 0
-    const tick = (now) => {
-      const t = now - start
-      const all = done === jobs.length
-      const cap = all ? 1 : Math.min(0.92, 0.15 + 0.75 * (done / jobs.length))
-      const target = t > MAX_TIME ? 1 : Math.min(cap, reduce ? 1 : t / MIN_TIME)
-      shown += (target - shown) * 0.14
-      if (target === 1 && shown > 0.996) shown = 1
-      pct.current.textContent = Math.round(shown * 100)
-      bar.current.style.transform = `scaleX(${shown})`
-      if (shown < 1) raf = requestAnimationFrame(tick)
-      else finish()
-    }
-    raf = requestAnimationFrame(tick)
+    let loaded = false
+    Promise.race([
+      Promise.all([
+        document.fonts?.ready ?? Promise.resolve(),
+        loadImage('/img/portrait.jpg'),
+        loadImage(projects[0].img),
+      ]),
+      wait(MAX_TIME),
+    ]).then(() => { loaded = true })
 
-    const finish = async () => {
-      finished = true
-      status.current.textContent = 'Loaded'
-      if (reduce) { onReveal(); onDone(); return } // no fall, the page simply appears
-      lang.current.textContent = HOME[1]
-      await scrambleTo(word.current, HOME[0], SCRAMBLE + 120)
-      await new Promise((r) => setTimeout(r, 480)) // a beat on "Halo" before the drop
-      if (!alive) return
+    const sequence = async () => {
+      const [d1, d2, d3] = dots.current
 
-      const width = window.innerWidth
-      const height = window.innerHeight
-      let cloth = null
-      try { cloth = createCloth(gl.current) } catch (e) { cloth = null }
-
-      if (!cloth) {
-        // No WebGL: the sheet simply slides away.
-        root.current.classList.add('loader--slide')
-        setTimeout(() => alive && onReveal(), 350)
-        setTimeout(() => alive && onDone(), 1100)
+      if (reduce) {
+        // The mark is simply there; when ready, the screen fades away.
+        bowl.current.setAttribute('stroke-dashoffset', '0')
+        dots.current.forEach((d) => { d.style.opacity = '1' })
+        while (alive && !loaded) await wait(100)
+        status.current.textContent = 'Loaded'
+        onReveal()
+        await run(root.current, { opacity: 0 }, { duration: 0.3 }).finished
+        onDone()
         return
       }
 
-      // Swap the page sheet for the cloth in the same frame, so the change cannot be seen.
-      const bg = getComputedStyle(root.current).backgroundColor
-      cloth.size(width, height)
-      cloth.setTexture(paintSheet(content.current, { bg, fabric, width, height }))
-      cloth.render()
-      root.current.classList.add('loader--cloth')
+      // 1. Empty, then the mark draws itself.
+      await wait(350)
+      if (!alive) return
+      run(bowl.current, { strokeDashoffset: [1, 0] }, { duration: 1, ease: [0.65, 0, 0.35, 1] })
+      const lands = [d1, d2, d3].map((d, i) =>
+        run(d, { scale: [0, 1], opacity: [0, 1] }, { type: 'spring', bounce: 0.45, duration: 0.7, delay: 0.3 + i * 0.12 })
+      )
+      await Promise.all(lands.map((a) => a.finished))
+
+      // 2. Pulse the stem while the page loads.
+      while (alive && (!loaded || performance.now() - start < MIN_TIME)) {
+        const wave = [d1, d2, d3].map((d, i) =>
+          run(d, { y: [0, -54, 0] }, { duration: 0.56, delay: i * 0.12, ease: [0.45, 0, 0.55, 1] })
+        )
+        await Promise.all(wave.map((a) => a.finished))
+        await wait(140)
+      }
+      if (!alive) return
+      status.current.textContent = 'Loaded'
+
+      // 3. The last dot gathers itself, turns orange...
+      d3.classList.add('loader__dot--hot')
+      await run(d3, { scale: [1, 1.18, 1] }, { duration: 0.42, ease: [0.34, 1.56, 0.64, 1] }).finished
+      await wait(120)
+      if (!alive) return
+
+      // ...and becomes a window. The camera flies into it until it fills the screen.
+      const box = logo.current.getBoundingClientRect()
+      const unit = box.width / VIEW
+      const cx = box.left + DOT_X * unit
+      const cy = box.top + DOTS[2] * unit
+      const r0 = DOT_R * unit
+      const far = Math.max(Math.hypot(cx, cy), Math.hypot(innerWidth - cx, cy), Math.hypot(cx, innerHeight - cy), Math.hypot(innerWidth - cx, innerHeight - cy))
+      const lnS = Math.log((far * 1.04) / r0)
+
+      const hole = (r) => {
+        const m = `radial-gradient(circle at ${cx}px ${cy}px, transparent ${r}px, #000 ${r + 0.75}px)`
+        root.current.style.maskImage = m
+        root.current.style.webkitMaskImage = m
+      }
+      hole(r0)
+      d3.style.visibility = 'hidden' // the page now shows exactly where the dot was
 
       let revealed = false
-      stopDrop = cloth.drop({
-        onFrame: (t) => { if (!revealed && t > 0.7) { revealed = true; onReveal() } },
-        onDone: () => { if (!revealed) onReveal(); onDone() },
+      const fly = run(0, 1, {
+        duration: 1.6,
+        ease: [0.76, 0, 0.24, 1],
+        onUpdate: (t) => {
+          const z = Math.exp(t * lnS) // zoom in log space, so the speed feels even
+          logo.current.style.transform = `scale(${z})`
+          hole(r0 * z)
+          if (!revealed && t > 0.18) { revealed = true; onReveal() }
+        },
       })
+      await fly.finished
+      if (alive) onDone()
     }
+    sequence()
 
-    return () => { alive = false; cancelAnimationFrame(raf); stopDrop?.() }
+    return () => { alive = false; running.forEach((a) => a.stop()) }
   }, [onReveal, onDone])
 
   return (
     <div className="loader" ref={root}>
-      <canvas className="loader__gl" ref={gl} aria-hidden="true" />
-      <div className="loader__content" ref={content}>
-        <p className="loader__name">I Komang Danda Priyowittesa</p>
-        <div className="loader__hello" aria-hidden="true">
-          <p className="loader__word display" ref={word}>&nbsp;</p>
-          <p className="loader__lang" ref={lang}>&nbsp;</p>
-        </div>
-        <p className="loader__count display" aria-hidden="true">
-          <span ref={pct}>0</span>%
-        </p>
-        <div className="loader__track" data-paint="box" aria-hidden="true">
-          <div className="loader__bar" data-paint="box" ref={bar} />
-        </div>
-        <p className="sr-only" role="status" ref={status}>Loading the portfolio</p>
-      </div>
+      <svg
+        className="loader__logo"
+        ref={logo}
+        viewBox={`0 0 ${VIEW} ${VIEW}`}
+        aria-hidden="true"
+        style={{ transformOrigin: `${(DOT_X / VIEW) * 100}% ${(DOTS[2] / VIEW) * 100}%` }}
+      >
+        <path ref={bowl} className="loader__bowl" d={BOWL} pathLength="1" strokeDasharray="1" strokeDashoffset="1" />
+        {DOTS.map((cy, i) => (
+          <circle key={cy} ref={(el) => (dots.current[i] = el)} className="loader__dot" cx={DOT_X} cy={cy} r={DOT_R} />
+        ))}
+      </svg>
+      <p className="sr-only" role="status" ref={status}>Loading the portfolio</p>
     </div>
   )
 }
