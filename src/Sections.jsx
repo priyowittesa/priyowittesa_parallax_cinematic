@@ -192,9 +192,11 @@ export function Contact() {
                 <a key={s.label} href={s.href} target="_blank" rel="noreferrer">{s.label}</a>
               ))}
             </span>
+            <small>Elsewhere</small>
           </div>
           <div className="row">
             <span>{person.city}</span>
+            <small>Based in</small>
           </div>
           <a className="row row--go" href={`mailto:${person.email}?subject=${subject}&body=${body}`}>
             <span>Start a project</span>
