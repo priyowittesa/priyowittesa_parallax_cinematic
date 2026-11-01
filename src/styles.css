@@ -237,49 +237,35 @@ main { position: relative; z-index: 2; background: var(--bg); transition: backgr
 .stat__n { font-family: var(--display); font-weight: 800; font-size: var(--step-head); white-space: nowrap; letter-spacing: -0.04em; line-height: 1; }
 .stat__l { margin-top: 12px; font-size: var(--step-small); color: var(--muted); max-width: 16em; }
 
-/* ---------- Work: a darkroom drying line. Disposable prints pegged to a rope that runs in a Z ---------- */
+/* ---------- Work: a pile of disposable prints, scattered across the table ---------- */
 .work { padding-top: var(--gap); background: var(--surface); transition: background-color 400ms var(--ease-in-out); }
 .work__head { padding: 0 var(--m); text-align: center; }
 .work__title { color: var(--muted); font-size: var(--step-poster); }
 .work__lead { max-width: 30em; margin: 20px auto 0; color: var(--muted); font-size: var(--step-body); text-wrap: balance; }
 
-.line {
-  --rope-h: 56px;                       /* height of the box the sagging rope is drawn in */
-  --row-gap: clamp(64px, 7vw, 104px);
+.pile {
   --paper-print: #f2f0eb;
+  container-type: inline-size;
   padding: clamp(56px, 6vw, 96px) var(--m) var(--gap);
 }
-.line__row {
-  position: relative; list-style: none; margin: 0; padding: 0;
-  display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); column-gap: clamp(20px, 3vw, 48px);
-  align-items: start;
-}
-.line__row + .line__row { margin-top: var(--row-gap); }
-.line__rope, .line__turn {
-  position: absolute; left: 0; width: 100%; overflow: visible; pointer-events: none; z-index: 0;
-  fill: none; stroke: var(--muted); stroke-width: 1.5px; stroke-linecap: round;
-}
-.line__rope { top: 0; height: var(--rope-h); }
-/* The diagonal starts where this row's rope ends (right) and lands where the next one starts (left). */
-.line__turn { top: calc(var(--rope-h) * 0.1); height: calc(100% + var(--row-gap)); stroke-dasharray: 2 7; opacity: 0.7; }
+.pile__board { list-style: none; margin: 0; padding: 0; }
+.spot { --lw: var(--w); position: relative; }
+/* The print under the pointer comes to the top of the pile. */
+.spot:hover, .spot:focus-within { z-index: 40; }
 
-.slot {
-  position: relative; z-index: 1;
-  padding-top: calc(var(--hang) * var(--rope-h) + 10px);
-  transform-origin: 50% calc(var(--hang) * var(--rope-h)); /* it swings from its peg */
+/* Wide screens: every print where it landed (Work.jsx), in units of the board's width. */
+@media (min-width: 1100px) {
+  .pile__board { position: relative; height: calc(var(--board-h) * 1cqw); }
+  .spot { position: absolute; left: calc(var(--x) * 1%); top: calc(var(--y) * 1cqw); width: calc(var(--w) * 1%); }
 }
-.slot:nth-child(even) { z-index: 2; }
-
-/* A wooden clothes peg, clipped onto the rope. */
-.peg {
-  position: absolute; z-index: 3; left: 50%; width: 12px; height: 44px; margin-left: -6px;
-  top: calc(var(--hang) * var(--rope-h) - 18px);
-  border-radius: 2px 2px 3px 3px;
-  background: linear-gradient(90deg, #a87d4f, #d8b98d 40%, #c49a6a 60%, #9b7046);
-  box-shadow: 0 3px 4px rgba(0, 0, 0, 0.35);
-  pointer-events: none;
+/* Narrower: large prints take a row on their own, medium ones go in pairs, still crooked. */
+@media (max-width: 1099px) {
+  .pile__board { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(28px, 5vw, 48px) clamp(16px, 3vw, 32px); align-items: start; }
+  .spot { --lw: 45; }
+  .spot--big { --lw: 80; grid-column: 1 / -1; width: 80%; }
+  .spot--big:nth-child(even) { justify-self: end; }
+  .spot:not(.spot--big):nth-child(odd) { margin-top: clamp(16px, 4vw, 36px); }
 }
-.peg::after { content: ''; position: absolute; left: -2px; right: -2px; top: 16px; height: 5px; border-radius: 1px; background: #8c9096; }
 
 /* The print: a disposable-camera photo with a white border and a deeper strip at the foot. */
 .print {
@@ -297,7 +283,16 @@ main { position: relative; z-index: 2; background: var(--bg); transition: backgr
 .print__photo { position: relative; display: block; aspect-ratio: 4 / 3; overflow: hidden; background: #2a2c30; }
 .print__photo img {
   width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%;
-  filter: grayscale(1) contrast(1.04); transition: filter 450ms var(--ease-out);
+  filter: grayscale(1) contrast(1.04);
+  transition: filter 450ms var(--ease-out), transform 700ms var(--ease-out);
+}
+/* Bare paper over the photo; Work.jsx fades it away as the print develops. */
+.print__dev { position: absolute; inset: 0; background: #f6f3ec; pointer-events: none; }
+/* Light on the glossy paper: a soft spot that follows the pointer (moved in Work.jsx). */
+.print__gloss {
+  position: absolute; left: 0; top: 0; width: 200%; height: 200%; pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.1) 22%, rgba(255, 255, 255, 0) 42%);
+  opacity: 0; transition: opacity 300ms var(--ease-out);
 }
 /* The orange date stamp a disposable camera burns into the corner; here it counts the roll. */
 .print__stamp {
@@ -310,39 +305,58 @@ main { position: relative; z-index: 2; background: var(--bg); transition: backgr
   padding: 14px 2px 18px; font-size: 0.75rem; line-height: 1.2; letter-spacing: 0.04em; text-transform: uppercase; color: #5b5e64;
 }
 .print__foot span:last-child { text-align: right; }
-/* The label: a sticker slapped across the photo's edge, alternating corners down the line. */
+/* The label: a sticker slapped across the photo's edge, alternating corners across the pile. */
 .print__label {
   position: absolute; left: -8px; bottom: calc(18px + 1.2em + 14px - 0.6em); z-index: 2;
   max-width: calc(100% + 8px); padding: 7px 10px 6px;
   background: var(--accent); color: var(--graphite);
-  font-size: clamp(0.8125rem, 0.55rem + 0.6vw, 1.125rem); font-weight: 800; line-height: 1; text-transform: uppercase;
+  font-size: clamp(0.8125rem, calc(var(--lw, 30) * 0.06cqw), 1.75rem); font-weight: 800; line-height: 1; text-transform: uppercase;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  transform: rotate(-3deg); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --tilt: -3deg;
+  transform: rotate(var(--tilt)); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  transform-origin: 0% 100%;
+  transition: transform 260ms var(--ease-out);
 }
-.print--b .print__label { left: auto; right: -8px; bottom: auto; top: 3.5%; transform: rotate(2.5deg); }
+.print--b .print__label { left: auto; right: -8px; bottom: auto; top: 3.5%; --tilt: 2.5deg; transform-origin: 100% 0%; }
+
+/* At rest the pile breathes: every print drifts a few pixels and a fraction of a degree, each on
+   its own clock, so the table never looks frozen. Stops while a print is held. */
+.spot__drift {
+  animation: drift calc(6.5s + var(--i) * 0.37s) ease-in-out calc(var(--i) * -1.3s) infinite alternate;
+  animation-play-state: paused;
+}
+/* Work.jsx sets this while the pile is on screen and the page is not scrolling. */
+.pile__board.is-still .spot__drift { animation-play-state: running; }
+@keyframes drift {
+  from { transform: translate3d(0, 0, 0) rotate(0deg); }
+  to { transform: translate3d(0, -5px, 0) rotate(0.6deg); }
+}
+.spot:nth-child(even) .spot__drift { animation-direction: alternate-reverse; }
+.spot:hover .spot__drift, .spot:focus-within .spot__drift { animation-play-state: paused; }
 
 @media (hover: hover) and (pointer: fine) {
-  /* Lifted off the line and straightened, and the photo gets its colour back. */
+  /* Picked up off the pile and straightened, and the photo gets its colour back. */
   .print:hover { transform: translateY(-8px) rotate(calc(var(--rot) * -1)); }
   .print:hover::after { opacity: 1; }
-  .print:hover .print__photo img { filter: none; }
+  .print:hover .print__photo img { filter: none; transform: scale(1.04); }
+  .print:hover .print__gloss { opacity: 1; }
+  /* The sticker lifts at its free corner, as if about to be peeled. */
+  .print:hover .print__label { transform: rotate(calc(var(--tilt) * 1.7)) translate3d(0, -2px, 0); }
 }
 .print:active { transform: translateY(-4px) rotate(calc(var(--rot) * -1)) scale(0.98); transition-duration: 120ms; }
 .print:focus-visible { outline: 3px solid var(--accent); outline-offset: 6px; }
 .print:focus-visible .print__photo img { filter: none; }
 
 @media (max-width: 640px) {
-  .line { --rope-h: 40px; --row-gap: 56px; }
-  .line__row { column-gap: 16px; }
-  .peg { width: 9px; height: 32px; margin-left: -4.5px; top: calc(var(--hang) * var(--rope-h) - 13px); }
-  .peg::after { top: 12px; height: 4px; }
   .print__foot { padding: 10px 1px 12px; font-size: 0.625rem; }
   .print__foot span:last-child { display: none; }
   .print__stamp { font-size: 0.5625rem; }
   .print__label { padding: 5px 7px 4px; bottom: calc(12px + 1.2em + 10px - 0.6em); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .print, .print::after, .print__photo img { transition-duration: 0ms; }
+  .print, .print::after, .print__photo img, .print__label { transition-duration: 0ms; }
+  .spot__drift { animation: none; }
+  .print__gloss { display: none; }
 }
 
 /* ---------- Project tooltip (floats, so it may carry a shadow) ---------- */
