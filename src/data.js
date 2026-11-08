@@ -7,7 +7,7 @@ export const person = {
   phone: '+62 822 6739 6716',
   phoneHref: 'tel:+6282267396716',
   city: 'Jakarta Timur, Indonesia',
-  resume: 'https://drive.google.com/file/d/1AvS7Kx49AsP9lnOURcqLqJ6MDwGoF65c/view?usp=sharing',
+  resume: 'https://drive.google.com/file/d/1H67eI9D1US1DHCV8rgZ9545Nut-ypMkQ/view?usp=sharing',
   social: [
     { label: 'LinkedIn', href: 'https://www.linkedin.com/in/xikdp/' },
     { label: 'Dribbble', href: 'https://dribbble.com/xikdp' },
