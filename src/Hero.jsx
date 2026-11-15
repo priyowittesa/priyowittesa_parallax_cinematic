@@ -90,14 +90,14 @@ export default function Hero() {
       <WaterFilters ids={WATER_IDS} />
       <div className="hero__media" aria-hidden="true">
         <motion.img
-          src="/img/portrait.jpg"
+          src="/img/hero-16x9.jpg"
           alt=""
-          width="1536"
-          height="2048"
+          width="2122"
+          height="1194"
           fetchpriority="high"
           style={{ y: imgY }}
-          initial={{ scale: 1.12 }}
-          animate={go ? { scale: 1.02 } : undefined}
+          initial={{ scale: 1.16 }}
+          animate={go ? { scale: 1.06 } : undefined}
           transition={{ duration: 2.2, ease: EASE_OUT }}
         />
         <div className="hero__scrim" />

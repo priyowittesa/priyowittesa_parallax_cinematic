@@ -21,7 +21,7 @@
   --hero-ink: var(--paper);
   --hero-soft: #cfd1d4;
   --hero-scrim: rgba(16, 17, 19, 0.28);
-  --hero-filter: grayscale(1) contrast(1.05) brightness(0.72);
+  --hero-filter: grayscale(1) contrast(1.05) brightness(0.72) blur(1.7px);
 
   --display: 'Unbounded', 'Arial Black', sans-serif;
   --text: 'Onest', system-ui, sans-serif;
@@ -53,7 +53,7 @@
   --hero-ink: var(--graphite);
   --hero-soft: #2c2e32;
   --hero-scrim: rgba(239, 240, 241, 0.5);
-  --hero-filter: grayscale(1) contrast(0.95) brightness(1.15);
+  --hero-filter: grayscale(1) contrast(0.95) brightness(1.15) blur(1.7px);
 }
 
 /* Theme switch: the browser's view transition does the animation, so the usual colour fades are paused. */
@@ -146,7 +146,7 @@ main { overflow-x: clip; }
 }
 .hero__media { position: absolute; inset: 0; z-index: 0; }
 .hero__media img {
-  width: 100%; height: 100%; object-fit: cover; object-position: 50% 28%;
+  width: 100%; height: 100%; object-fit: cover; object-position: 50% 100%; transform-origin: 50% 100%;
   filter: var(--hero-filter);
   transition: filter 400ms var(--ease-in-out);
 }
@@ -558,7 +558,7 @@ a.row:hover .row__t, a.row:focus-visible .row__t { transform: translateX(14px); 
   .hero__line--1 { padding-top: 88px; }
   .hero__line--2 { padding-bottom: 20px; }
   .hero__mid { align-self: end; padding: 0 var(--m) 28px; max-width: none; }
-  .hero__media img { object-position: 50% 22%; }
+  .hero__media img { object-position: 78% 100%; }
 
   .intro__head, .intro__text, .intro__stats { grid-column: 1 / -1; }
   .intro__text { padding-top: 32px; }

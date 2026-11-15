@@ -46,7 +46,7 @@ export default function Loader({ onReveal, onDone }) {
     Promise.race([
       Promise.all([
         document.fonts?.ready ?? Promise.resolve(),
-        loadImage('/img/portrait.jpg'),
+        loadImage('/img/hero-16x9.jpg'),
         loadImage(projects[0].img),
       ]),
       wait(MAX_TIME),
