@@ -640,13 +640,23 @@ a.row:hover .row__t, a.row:focus-visible .row__t { transform: translateX(14px); 
 
 /* ---------- Short screens (phones on their side): nothing may be taller than it can scroll ---------- */
 @media (max-height: 520px) and (orientation: landscape) {
-  .hero { min-height: 480px; }
-  .hero h1 { font-size: min(15vw, 30svh, 9rem); }
-  .hero__line--1 { padding-top: 64px; }
+  /* The whole hero fits one screen: title, then a single compact row with the intro and the action. */
+  .hero { height: 100svh; min-height: 290px; grid-template-rows: auto 1fr auto auto; }
+  .hero h1 { font-size: min(15vw, 19svh, 9rem); }
+  .hero__line--1 { padding-top: 54px; }
+  /* Both names stack on the left, so the figure in the photo stands clear on the right. */
+  .hero__line--2 { grid-row: 2; align-self: start; justify-self: start; padding: 0 0 0 var(--m); margin-top: 0.02em; }
+  .hero__bar { top: 10px; }
+  .hero__mid {
+    grid-row: 4; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0 24px;
+    margin: 0 var(--m); padding: 10px 0 12px; border-top: 1px solid color-mix(in srgb, var(--hero-ink) 32%, transparent);
+  }
+  .hero__intro { display: block; max-width: none; grid-column: 1; grid-row: 1; }
+  .hero__lede { grid-column: auto; grid-row: auto; font-size: 0.9375rem; line-height: 1.35; max-width: 40em; }
   .hero__meta { display: none; }
-  .hero__mid .btn { min-height: 48px; }
+  .hero__mid .btn { grid-column: 2; grid-row: 1; width: auto; min-height: 44px; padding: 0 18px; white-space: nowrap; }
   /* A sticky footer taller than the screen would hide its top; let it scroll normally. */
-  .footer { position: relative; min-height: 0; }
+  .footer { position: relative; min-height: 0; row-gap: 32px; }
   .intro__fig { min-height: 0; }
   .intro__pin { position: static; }
   .assemble { height: 200svh; }
