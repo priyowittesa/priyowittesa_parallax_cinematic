@@ -10,7 +10,14 @@ function useSmoothScroll(enabled) {
   useEffect(() => {
     if (!enabled) return
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    const lenis = new Lenis({ lerp: 0.1, anchors: true })
+    // Slow, weighty glide: a low lerp makes every wheel tick travel further and settle gently.
+    // Touch keeps the native feel (syncTouch off), so phones stay responsive.
+    const lenis = new Lenis({
+      lerp: 0.055,
+      wheelMultiplier: 0.8,
+      touchMultiplier: 1,
+      anchors: { lerp: 0.06 },
+    })
     let id
     const raf = (t) => {
       lenis.raf(t)

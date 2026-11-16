@@ -139,16 +139,18 @@ export default function Hero() {
         animate={go ? { opacity: 1, y: 0 } : undefined}
         transition={{ duration: 0.7, ease: EASE_OUT, delay: 0.45 }}
       >
-        <p className="hero__lede">
-          I Komang Danda Priyowittesa, a UI/UX designer in Jakarta. I design enterprise software for management,
-          finance and field operations.
-        </p>
-        <p className="hero__meta">
-          <span>Currently UI/UX Designer at PT. Altimeda Cipta Visitama</span>
-          <span>
-            Jakarta, <time>{time}</time> WIB, {status}
-          </span>
-        </p>
+        <div className="hero__intro">
+          <p className="hero__lede">
+            I Komang Danda Priyowittesa, a UI/UX designer in Jakarta. I design enterprise software for management,
+            finance and field operations.
+          </p>
+          <p className="hero__meta">
+            <span>Currently UI/UX Designer at PT. Altimeda Cipta Visitama</span>
+            <span>
+              Jakarta, <time>{time}</time> WIB, {status}
+            </span>
+          </p>
+        </div>
         <a className="btn" href="#work">
           See the work <span className="arrow" aria-hidden="true">→</span>
         </a>
